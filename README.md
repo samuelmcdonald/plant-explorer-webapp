@@ -65,5 +65,5 @@ This will start the Flask development server, and you should see output indicati
 
 ## Authors
 
-- **Samuel McDonald** - *Initial work* - [samuelmcdonald](https://github.com/samuelmcdonald)
+- **Samuel McDonald** - *Created application and leveraged API* - [samuelmcdonald](https://github.com/samuelmcdonald)
 - **Team Member's Name** - [TeamMemberUsername](https://github.com/TeamMemberUsername)
