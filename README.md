@@ -18,13 +18,13 @@ Before you begin, ensure you have the following installed:
 Follow these steps to get your development environment set up:
 
 1. **Clone the repository**
-
+```
 git clone https://github.com/<your-username>/plant-explorer-webapp.git
-
+```
 2. **Navigate to the project directory**
-
+```
 cd plant-explorer-webapp
-
+```
 3. **Create a virtual environment (Optional)**
 
 - For Windows:
