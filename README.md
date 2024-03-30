@@ -48,19 +48,19 @@ cd plant-explorer-webapp
   ```
 
 5. **Install the required packages**
-
+```
 pip install -r requirements.txt
-
+```
 ### Running the Application
 
 With your virtual environment activated and dependencies installed, you can run the Flask application using the following command:
-
+```
 flask run
-
+```
 Or you can use:
-
+```
 python -m flask run
-
+```
 This will start the Flask development server, and you should see output indicating it's running on `http://127.0.0.1:5000/`. Open this URL in your web browser to view the application.
 
 ## Authors
