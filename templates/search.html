@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"> <!-- Ensure this CSS path is correct -->
+</head>
+<body>
+    <div class="navbar">
+        <a href="/" class="tab">Home</a> 
+        <a href="/search" class="tab">Search</a> 
+        <a href="/favorites" class="tab">Favorites</a>
+        <a href="/logout" class="tab">Logout</a>
+    </div>
+
+    <!-- Updated Search Content Section with Search Form -->
+    <div id="search" class="content">
+        <h1>Search for Plants</h1>
+        <form action="/search-results" method="GET"> <!-- Update 'action' based on your server-side setup -->
+            <input type="text" name="query" placeholder="Enter plant name..." required>
+            <button type="submit">Search</button>
+        </form>
+    </div>
+
+    <!-- Other Content Sections -->
+    <div id="home" class="content" style="display: none;">Home Content</div>
+    <div id="favorites" class="content" style="display: none;">Favorites Content</div>
+    <div id="logout" class="content" style="display: none;">Logout Content</div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script> <!-- Ensure this JS path is correct -->
+</body>
+</html>
+
+ 

@@ -1,0 +1,49 @@
+/* Basic Reset */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+/* Style the navigation bar */
+.navbar {
+    background-color: #333;
+    overflow: hidden;
+    padding: 14px 20px;
+}
+
+/* Navigation links */
+.navbar a.tab {
+    color: white;
+    text-decoration: none;
+    padding: 12px 18px;
+    background-color: #444; /* Slightly lighter than the navbar for contrast */
+    margin-right: 8px;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+
+/* Change background color on hover */
+.navbar a.tab:hover {
+    background-color: #555;
+}
+
+/* Content styling */
+.content {
+    padding: 20px;
+    background-color: white;
+    margin: 20px 0;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Adjust the margin for the first content element */
+.content:first-of-type {
+    margin-top: 60px;
+}
