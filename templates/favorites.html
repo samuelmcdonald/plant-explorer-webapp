@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h2>Your Favorites</h2>
+    <ul>
+        {% for plant in favorites %}
+            <li>{{ plant.plant_name }}</li>
+        {% else %}
+            <p>You have no favorite plants yet.</p>
+        {% endfor %}
+    </ul>
+{% endblock %}
