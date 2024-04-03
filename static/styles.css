@@ -1,0 +1,97 @@
+/* Basic reset for margin and padding */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body, html {
+    height: 100%;
+    background-color: #f5f5f5; /* Light grey background */
+}
+
+/* Centered form styles */
+.centered-form {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.form-container {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    width: 300px; /* Adjust width as needed */
+}
+
+input[type="text"], input[type="password"], .btn {
+    width: calc(100% - 24px); /* Adjusted width to account for padding */
+    padding: 12px;
+    margin: 8px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+button, .btn, .back-to-login, .back-to-register {
+    background-color: #4CAF50; /* Green */
+    color: white; /* Text color */
+    padding: 14px 20px;
+    margin: 8px 0; /* Space between buttons */
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none; /* Remove underline for links */
+    text-align: center; /* Center text for links */
+    display: block; /* Force links to be block elements */
+    width: calc(100% - 40px); /* Ensure buttons are the same width */
+}
+
+button:hover, .btn:hover, .back-to-login:hover, .back-to-register:hover {
+    background-color: #45a049; /* Darker green on hover */
+}
+
+.flash, .error {
+    color: white; /* Error message text color */
+    background-color: #f8d7da; /* Error message background color */
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+    width: calc(100% - 40px); /* Adjust width to match form elements */
+    box-sizing: border-box;
+}
+
+/* Full width for the taskbar and fixed to the top */
+.taskbar {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background-color: #333;
+}
+
+.taskbar li {
+    float: left;
+}
+
+.taskbar li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+
+.taskbar li a:hover, .taskbar li a.active {
+    background-color: #4CAF50;
+}
+
+main, .content-container {
+    padding-top: 70px; /* Adjust based on the taskbar's actual height */
+}
