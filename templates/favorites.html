@@ -1,12 +1,34 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h2>Your Favorites</h2>
-    <ul>
-        {% for plant in favorites %}
-            <li>{{ plant.plant_name }}</li>
-        {% else %}
-            <p>You have no favorite plants yet.</p>
-        {% endfor %}
-    </ul>
+<div id="favorites-container">
+    {% for favorite in favorites %}
+    <div class="plant-card">
+        <img src="{{ favorite.plant_image_url if favorite.plant_image_url else url_for('static', filename='images/default-plant-image.png') }}" alt="Plant Image" class="plant-image">
+        <div class="plant-info">
+            <h3>{{ favorite.plant_common_name or favorite.plant_scientific_name or 'Unknown Plant' }}</h3>
+            <p>Duration: {{ favorite.duration or 'N/A' }}<br>
+               Edible Parts: {{ favorite.edible_parts or 'N/A' }}<br>
+               Edible: {{ favorite.edible or 'No' }}<br>
+               Vegetable: {{ favorite.vegetable or 'No' }}<br>
+               Synonyms: {{ favorite.synonyms or 'None' }}</p>
+        </div>
+        <i class="fas fa-times bookmark-btn" data-plant-name="{{ favorite.plant_name }}" onclick="unbookmarkPlant(this)"></i>
+    </div>
+    {% else %}
+    <p>You have no favorite plants yet.</p>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    $('#favorites-container').on('click', '.bookmark-btn', function() {
+        var button = this;
+        var plantName = $(this).data('plant-name');
+        window.unbookmarkPlant(button);
+    });
+});
+</script>
 {% endblock %}

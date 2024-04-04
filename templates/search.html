@@ -1,6 +1,87 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h1>Search Page</h1>
-    <p>This is a placeholder for the search page.</p>
+<div class="search-container">
+    <h1>Search for Plants</h1>
+    <input type="text" id="search-input" placeholder="Type to search for plants..." autocomplete="off">
+    <div id="search-results"></div>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('#search-input').on('input', function() {
+        var searchValue = $(this).val();
+        if (searchValue.length >= 3) {
+            $.ajax({
+                url: "{{ url_for('api_search_plants') }}",
+                method: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ plant_name: searchValue }),
+                success: function(data) {
+                    $('#search-results').empty();
+                    data.forEach(function(plant) {
+                        var bookmarkClass = plant.bookmarked ? 'bookmarked' : '';
+                        var description = `Duration: ${plant.duration || 'N/A'}<br>
+                                           Edible Parts: ${plant.edible_parts || 'N/A'}<br>
+                                           Edible: ${plant.edible ? 'Yes' : 'No'}<br>
+                                           Vegetable: ${plant.vegetable ? 'Yes' : 'No'}<br>
+                                           Synonyms: ${plant.synonyms || 'None'}`;
+                        var resultHTML = `<div class="plant-card">
+                            <img src="${plant.image_url || '/path/to/default/image'}" alt="Plant Image" class="plant-image">
+                            <div class="plant-info">
+                                <h3>${plant.common_name || plant.scientific_name}</h3>
+                                <p>${description}</p>
+                            </div>
+                            <i class="far fa-bookmark bookmark-btn ${bookmarkClass}"
+                               data-plant-name="${plant.scientific_name || plant.common_name}"
+                               data-bookmarked="${plant.bookmarked ? 'true' : 'false'}"
+                               onclick="toggleBookmark(this)"></i>
+                            </div>`;
+                        $('#search-results').append(resultHTML);
+                    });
+                }
+            });
+        } else {
+            $('#search-results').empty();
+        }
+    });
+    
+    window.toggleBookmark = function(button) {
+        var plantName = $(button).data('plant-name');
+        var bookmarked = $(button).hasClass('bookmarked');
+        $.ajax({
+            url: '/update_favorites',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                plant_name: plantName,
+                bookmarked: !bookmarked
+            }),
+            success: function(response) {
+                if (response.bookmarked) {
+                    $(button).addClass('bookmarked').css('background-color', '#007bff').data('bookmarked', true);
+                    showTempMessage(plantName + " has been added to your favorites");
+                } else {
+                    $(button).removeClass('bookmarked').css('background-color', '').data('bookmarked', false);
+                    showTempMessage(plantName + " has been removed from your favorites");
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("Error updating favorites:", xhr.responseText);
+            }
+        });
+    };
+
+    function showTempMessage(message) {
+        var tempMessage = $('<div>').addClass('temp-message').text(message);
+        $('body').append(tempMessage);
+        setTimeout(function() {
+            tempMessage.fadeOut(function() {
+                tempMessage.remove();
+            });
+        }, 3000); // Message displays for 3 seconds then fades out
+    }
+});
+</script>
 {% endblock %}

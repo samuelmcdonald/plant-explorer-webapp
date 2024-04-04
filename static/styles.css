@@ -95,3 +95,64 @@ button:hover, .btn:hover, .back-to-login:hover, .back-to-register:hover {
 main, .content-container {
     padding-top: 70px; /* Adjust based on the taskbar's actual height */
 }
+
+.plant-card {
+    position: relative; /* Add this line */
+    display: flex;
+    background-color: white;
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    align-items: center;
+}
+
+
+.plant-image {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    margin-right: 15px;
+    border-radius: 8px;
+}
+
+.plant-info h2, .plant-info p {
+    margin: 0;
+    padding: 0;
+}
+
+.plant-info h2 {
+    margin-bottom: 5px;
+    font-size: 18px;
+}
+
+.plant-info p {
+    font-size: 14px;
+    color: #666;
+}
+
+.bookmark-btn {
+    cursor: pointer;
+    color: black; /* Default icon color */
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.bookmark-btn.bookmarked {
+    color: #007bff; /* Blue color for the bookmarked state */
+}
+
+
+
+
+.temp-message {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: lightblue;
+    text-align: center;
+    padding: 10px;
+    z-index: 1000;
+}

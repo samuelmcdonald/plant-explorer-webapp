@@ -9,6 +9,13 @@ from flask_login import logout_user
 from forms import RegistrationForm 
 from models import User
 from extensions import db, migrate, login_manager
+import os
+import requests
+from flask import Flask, request, render_template, jsonify
+from models import Favorite
+
+
+api_key = 'JyXG87zvWmnQIa28tx4O3OBJ87mxXlrGr8kDnP9_JEo'
 
 def create_app():
     app = Flask(__name__)
@@ -70,17 +77,93 @@ def create_app():
         logout_user()
         return redirect(url_for('login'))
 
-    @app.route('/search')
-    def search():
-        # Your search functionality
-        return render_template('search.html')
-
     @app.route('/favorites')
     @login_required
     def favorites():
-        # Fetch the user's favorite plants logic here
-        sample_favorites = []  # This is a placeholder
-        return render_template('favorites.html', favorites=sample_favorites)
+        user_favorites = Favorite.query.filter_by(user_id=current_user.id).all()
+        
+        # Debugging: Log out some details of each favorite to verify their existence
+        for favorite in user_favorites:
+            print(f"Plant Name: {favorite.plant_name}, Image URL: {favorite.plant_image_url}")
+        
+        return render_template('favorites.html', favorites=user_favorites)
+            
+    @app.route('/search')
+    def search():
+        return render_template('search.html')
+
+
+    @app.route('/api/search_plants', methods=['POST'])
+    def api_search_plants():
+        data = request.json  # Get JSON data from the request
+        plant_name = data.get('plant_name')  # Access the plant_name field
+        plant_data = fetch_plant_data(plant_name)
+        if plant_data and 'data' in plant_data:
+            # Transforming the response to include only necessary info
+            simplified_data = [
+                {
+                    'common_name': plant.get('common_name'), 
+                    'scientific_name': plant.get('scientific_name'), 
+                    'image_url': plant.get('image_url')
+                } for plant in plant_data['data']
+            ]
+            return jsonify(simplified_data)  # Return the simplified plant data
+        return jsonify([])  # Return an empty list if no data is found
+
+    def fetch_plant_data(plant_name):
+        """Fetches data for a given plant name from the Trefle API."""
+        api_url = f"https://trefle.io/api/v1/plants/search?token={api_key}&q={plant_name}"
+        response = requests.get(api_url)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return None
+        
+    @app.route('/update_favorites', methods=['POST'])
+    @login_required
+    def update_favorites():
+        data = request.json
+        print("Received data for update favorites:", data)
+
+        if not data or 'plant_name' not in data:
+            return jsonify({'error': 'Missing data'}), 400
+
+        plant_name = data['plant_name']
+        bookmarked = data['bookmarked']
+        plant_image_url = data.get('plant_image_url', '')
+
+        # Convert 'Yes'/'No' strings to boolean values
+        edible = True if data.get('edible') == 'Yes' else False
+        vegetable = True if data.get('vegetable') == 'Yes' else False
+
+        favorite = Favorite.query.filter_by(user_id=current_user.id, plant_name=plant_name).first()
+
+        if bookmarked and not favorite:
+            new_favorite = Favorite(
+                user_id=current_user.id,
+                plant_name=plant_name,
+                plant_common_name=data.get('plant_common_name', ''),
+                plant_scientific_name=data.get('plant_scientific_name', ''),
+                plant_image_url=data.get('plant_image_url', ''),
+                plant_description=data.get('plant_description', ''),
+                duration=data.get('duration', ''),
+                edible=edible,
+                vegetable=vegetable,
+                edible_parts=data.get('edible_parts', ''),
+                synonyms=data.get('synonyms', '')
+            )
+            db.session.add(new_favorite)
+            db.session.commit()
+            return jsonify({'bookmarked': True})
+        elif not bookmarked and favorite:
+            db.session.delete(favorite)
+            db.session.commit()
+            return jsonify({'bookmarked': False})
+
+        return jsonify({'error': 'Unknown error occurred'}), 500
+
+
+
 
     return app
 

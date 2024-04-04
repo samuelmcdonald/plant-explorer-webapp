@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Plant Explorer</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
 <body {% if not hide_nav %}class="taskbar-visible"{% endif %}>
     <header>
@@ -33,5 +35,36 @@
     <main class="content-container">
         {% block content %}{% endblock %}
     </main>
+    <script>
+        window.unbookmarkPlant = function(button) {
+            var plantName = $(button).data('plant-name');
+            console.log("Attempting to unbookmark plant:", plantName); // For debugging.
+            $.ajax({
+                url: '/update_favorites',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    plant_name: plantName,
+                    bookmarked: false
+                }),
+                success: function(response) {
+                    console.log("Success response:", response); // For debugging.
+                    if (!response.bookmarked) {
+                        $(button).closest('.plant-card').fadeOut(300, function() { $(this).remove(); });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error removing from favorites:", error);
+                }
+            });
+        };
+        function showTempMessage(message) {
+          var tempMessage = $('<div>').addClass('temp-message').text(message);
+          $('body').append(tempMessage);
+          setTimeout(function() {
+            tempMessage.fadeOut(function() { tempMessage.remove(); });
+          }, 3000); // Message shows for 3 seconds
+        }
+      </script>
 </body>
 </html>
