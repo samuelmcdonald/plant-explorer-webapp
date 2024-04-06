@@ -123,18 +123,18 @@ def create_app():
     @login_required
     def update_favorites():
         data = request.json
-        print("Received data for update favorites:", data)
-
-        if not data or 'plant_name' not in data:
-            return jsonify({'error': 'Missing data'}), 400
-
-        plant_name = data['plant_name']
-        bookmarked = data['bookmarked']
+        plant_name = data.get('plant_name')
+        bookmarked = data.get('bookmarked')
+        plant_common_name = data.get('plant_common_name', '')
+        plant_scientific_name = data.get('plant_scientific_name', '')
         plant_image_url = data.get('plant_image_url', '')
-
-        # Convert 'Yes'/'No' strings to boolean values
-        edible = True if data.get('edible') == 'Yes' else False
-        vegetable = True if data.get('vegetable') == 'Yes' else False
+        plant_description = data.get('plant_description', '')
+        # Assuming these additional fields are optional, provide default values
+        duration = data.get('duration', 'N/A')
+        edible = data.get('edible', False)
+        vegetable = data.get('vegetable', False)
+        edible_parts = data.get('edible_parts', 'N/A')
+        synonyms = data.get('synonyms', 'None')
 
         favorite = Favorite.query.filter_by(user_id=current_user.id, plant_name=plant_name).first()
 
@@ -142,15 +142,15 @@ def create_app():
             new_favorite = Favorite(
                 user_id=current_user.id,
                 plant_name=plant_name,
-                plant_common_name=data.get('plant_common_name', ''),
-                plant_scientific_name=data.get('plant_scientific_name', ''),
-                plant_image_url=data.get('plant_image_url', ''),
-                plant_description=data.get('plant_description', ''),
-                duration=data.get('duration', ''),
+                plant_common_name=plant_common_name,
+                plant_scientific_name=plant_scientific_name,
+                plant_image_url=plant_image_url,
+                plant_description=plant_description,
+                duration=duration,
                 edible=edible,
                 vegetable=vegetable,
-                edible_parts=data.get('edible_parts', ''),
-                synonyms=data.get('synonyms', '')
+                edible_parts=edible_parts,
+                synonyms=synonyms
             )
             db.session.add(new_favorite)
             db.session.commit()

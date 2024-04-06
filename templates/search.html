@@ -9,55 +9,76 @@
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script>
-$(document).ready(function() {
-    $('#search-input').on('input', function() {
-        var searchValue = $(this).val();
-        if (searchValue.length >= 3) {
-            $.ajax({
-                url: "{{ url_for('api_search_plants') }}",
-                method: "POST",
-                contentType: "application/json",
-                data: JSON.stringify({ plant_name: searchValue }),
-                success: function(data) {
-                    $('#search-results').empty();
-                    data.forEach(function(plant) {
-                        var bookmarkClass = plant.bookmarked ? 'bookmarked' : '';
-                        var description = `Duration: ${plant.duration || 'N/A'}<br>
-                                           Edible Parts: ${plant.edible_parts || 'N/A'}<br>
-                                           Edible: ${plant.edible ? 'Yes' : 'No'}<br>
-                                           Vegetable: ${plant.vegetable ? 'Yes' : 'No'}<br>
-                                           Synonyms: ${plant.synonyms || 'None'}`;
-                        var resultHTML = `<div class="plant-card">
-                            <img src="${plant.image_url || '/path/to/default/image'}" alt="Plant Image" class="plant-image">
-                            <div class="plant-info">
-                                <h3>${plant.common_name || plant.scientific_name}</h3>
-                                <p>${description}</p>
-                            </div>
-                            <i class="far fa-bookmark bookmark-btn ${bookmarkClass}"
-                               data-plant-name="${plant.scientific_name || plant.common_name}"
-                               data-bookmarked="${plant.bookmarked ? 'true' : 'false'}"
-                               onclick="toggleBookmark(this)"></i>
-                            </div>`;
-                        $('#search-results').append(resultHTML);
-                    });
-                }
-            });
-        } else {
-            $('#search-results').empty();
-        }
-    });
+    $(document).ready(function() {
+        $('#search-input').on('input', function() {
+            var searchValue = $(this).val();
+            if (searchValue.length >= 3) {
+                $.ajax({
+                    url: "{{ url_for('api_search_plants') }}",
+                    method: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({ plant_name: searchValue }),
+                    success: function(data) {
+                        $('#search-results').empty();
+                        data.forEach(function(plant) {
+                            var bookmarkClass = plant.bookmarked ? 'bookmarked' : '';
+                            var resultHTML = `<div class="plant-card">
+                                <img src="${plant.image_url || 'path/to/default/image'}" alt="Plant Image" class="plant-image">
+                                <div class="plant-info">
+                                    <h3>${plant.common_name || plant.scientific_name}</h3>
+                                    <p>Duration: ${plant.duration || 'N/A'}<br>
+                                       Edible Parts: ${plant.edible_parts || 'N/A'}<br>
+                                       Edible: ${plant.edible ? 'Yes' : 'No'}<br>
+                                       Vegetable: ${plant.vegetable ? 'Yes' : 'No'}<br>
+                                       Synonyms: ${plant.synonyms || 'None'}</p>
+                                </div>
+                                <i class="far fa-bookmark bookmark-btn ${bookmarkClass}"
+                                   data-plant-name="${plant.scientific_name || plant.common_name}"
+                                   data-plant-image-url="${plant.image_url}"
+                                   data-common-name="${plant.common_name}"
+                                   data-scientific-name="${plant.scientific_name}"
+                                   data-description="Details here..."
+                                   data-duration="${plant.duration}"
+                                   data-edible="${plant.edible}"
+                                   data-vegetable="${plant.vegetable}"
+                                   data-edible-parts="${plant.edible_parts}"
+                                   data-synonyms="${plant.synonyms}"
+                                   onclick="toggleBookmark(this)"></i>
+                                </div>`;
+                            $('#search-results').append(resultHTML);
+                        });
+                    }
+                });
+            } else {
+                $('#search-results').empty();
+            }
+        });
     
-    window.toggleBookmark = function(button) {
+        window.toggleBookmark = function(button) {
         var plantName = $(button).data('plant-name');
         var bookmarked = $(button).hasClass('bookmarked');
+        var plantDetails = {
+            plant_name: plantName,
+            bookmarked: !bookmarked,
+            // Ensure that you are sending boolean values for 'edible' and 'vegetable' if they exist.
+            // Assuming 'data-edible' and 'data-vegetable' attributes store 'Yes' or 'No'.
+            edible: $(button).data('edible') === 'Yes', // Convert to boolean
+            vegetable: $(button).data('vegetable') === 'Yes', // Convert to boolean
+            // Include other details similar to below:
+            plant_common_name: $(button).data('common-name'),
+            plant_scientific_name: $(button).data('scientific-name'),
+            plant_image_url: $(button).data('plant-image-url'),
+            plant_description: $(button).data('description'),
+            duration: $(button).data('duration'),
+            edible_parts: $(button).data('edible-parts'),
+            synonyms: $(button).data('synonyms')
+        };
+
         $.ajax({
             url: '/update_favorites',
             method: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({
-                plant_name: plantName,
-                bookmarked: !bookmarked
-            }),
+            data: JSON.stringify(plantDetails),
             success: function(response) {
                 if (response.bookmarked) {
                     $(button).addClass('bookmarked').css('background-color', '#007bff').data('bookmarked', true);
