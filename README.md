@@ -72,7 +72,7 @@ These commands prepare your database for use with the application by creating th
 To view a physical version of the database, download SQLite for your desktop, and click the "load database" button, then select the instance folder and 
 upload the "plantexplorer.db" file. Now you can use SQL queries to view the contents of your database as well as its structure
 
-### Running the Application
+# Running the Application
 
 With your virtual environment activated and dependencies installed, you can run the Flask application using the following command:
 ```
