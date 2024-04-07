@@ -58,11 +58,11 @@ After installing the required packages, you'll need to set up the database befor
 ```
 flask db init
 ```
-3. **Generate an initial database migration**
+2. **Generate an initial database migration**
 ```
 flask db migrate -m "Initial migration."
 ```
-4. **Apply the migration to the database**
+3. **Apply the migration to the database**
 ```
 flask db upgrade
 ```
