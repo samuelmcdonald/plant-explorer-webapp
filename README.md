@@ -51,6 +51,27 @@ cd plant-explorer-webapp
 ```
 pip install -r requirements.txt
 ```
+### Database Initialization
+After installing the required packages, you'll need to set up the database before running the application. Follow these steps to initialize your database:
+
+1. **Initialize the database migration environment**
+```
+flask db init
+```
+3. **Generate an initial database migration**
+```
+flask db migrate -m "Initial migration."
+```
+4. **Apply the migration to the database**
+```
+flask db upgrade
+```
+These commands prepare your database for use with the application by creating the necessary tables and schema.
+
+# Viewing the database
+To view a physical version of the database, download SQLite for your desktop, and click the "load database" button, then select the instance folder and 
+upload the "plantexplorer.db" file. Now you can use SQL queries to view the contents of your database as well as its structure
+
 ### Running the Application
 
 With your virtual environment activated and dependencies installed, you can run the Flask application using the following command:
