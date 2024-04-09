@@ -13,6 +13,9 @@ from extensions import db, migrate, login_manager
 import os
 import requests
 from flask import Flask, request, render_template, jsonify
+from flask import request, jsonify
+from models import Bookmark
+from extensions import db
 
 
 api_key = 'sk-stgs65f4ded3c05e34749'
@@ -37,7 +40,10 @@ def create_app():
 
     # Define all your routes within create_app to ensure they are part of the application context
     @app.route('/')
+    @login_required
     def home():
+        if not current_user.is_authenticated:
+            return redirect(url_for('login'))
         return render_template('index.html', hide_nav=False)
 
     @app.route('/register', methods=['GET', 'POST'])
@@ -80,98 +86,94 @@ def create_app():
     @app.route('/favorites')
     @login_required
     def favorites():       
-        return render_template('favorites.html')
+        favorites = Bookmark.query.filter_by(user_id=current_user.id).all()
+        return render_template('favorites.html', favorites=favorites)
             
     @app.route('/search')
+    @login_required
     def search():
         return render_template('search.html')
 
 
-    def fetch_species_id(api_key, plant_name):
-        search_url = f"https://perenual.com/api/species-list?key={api_key}&q={plant_name}"
-        response = requests.get(search_url)
-        print("API Response:", response.text)  # Print API response
-        if response.status_code == 200:
-            species_data = response.json().get('data', [])
-            if species_data:
-                # Assuming the API returns the first species found
-                return species_data[0].get('species_id')
-        return None
-
-
-
-    def fetch_care_guide(api_key, plant_id):
-        guide_types = ['watering', 'sunlight', 'pruning']
-        guide_details = {}
-
-        for guide_type in guide_types:
-            guide_url = f"https://perenual.com/api/species-care-guide-list?key={api_key}&type={guide_type}&species_id={plant_id}"
-            try:
-                response = requests.get(guide_url)
-                response.raise_for_status()  # Raise an exception for 4xx or 5xx status codes
-                
-                print(f"{guide_type.capitalize()} Guide Response:", response.text)  # Print API response
-                
-                if response.status_code == 200:
-                    guide_data = response.json().get('data', [])
-                    if guide_data:
-                        guide_details[guide_type] = guide_data[0].get('description')
-                    else:
-                        guide_details[guide_type] = 'No guide available.'
-                else:
-                    guide_details[guide_type] = 'Failed to fetch guide.'
-                    
-                print(f"{guide_type.capitalize()} Guide Details:", guide_details[guide_type])  # Print guide details
-            except requests.RequestException as e:
-                print(f"Error fetching {guide_type} guide:", e)
-                guide_details[guide_type] = f"Error fetching {guide_type} guide: {str(e)}"
-                
-        return guide_details
-
-
-
     @app.route('/api/search', methods=['GET'])
+    @login_required
     def api_search():
-        query_params = {
-            'q': request.args.get('q', ''),
-            'page': request.args.get('page', 1),
-            'order': request.args.get('order', 'asc'),
-        }
+        plant_name = request.args.get('q', '')
+        if not plant_name:
+            return jsonify({'error': 'Please provide a plant name to search for.'}), 400
 
-        api_url = f"https://perenual.com/api/species-list?key={api_key}"
-        for param, value in query_params.items():
-            if value is not None:
-                api_url += f"&{param}={value}"
+        api_url = f"https://perenual.com/api/species-care-guide-list?key={api_key}&q={plant_name}"
 
         try:
             response = requests.get(api_url)
-            response.raise_for_status()
-            plants_data = response.json().get('data', [])
+            response.raise_for_status()  # Checks for HTTP request errors
+            guides_data = response.json().get('data', [])
 
-            with ThreadPoolExecutor() as executor:
-                futures = {executor.submit(fetch_care_guide, api_key, plant.get('species_id', '')): plant for plant in plants_data}
-                for future in futures:
-                    plant = futures[future]
-                    guide_details = future.result()  # Fetch all guides
-                    
-                    # Update plant dictionary with fetched guides
-                    plant.update(guide_details)
-
-            # Construct the final plants list with required information
-            plants = [{
-                'common_name': plant['common_name'], 
-                'scientific_name': plant['scientific_name'][0],
-                'cycle': plant.get('cycle', 'Unknown'),  # Assuming you still want to include the cycle
-                'watering_guide': plant.get('watering', 'No guide available.'),
-                'sunlight_guide': plant.get('sunlight', 'No guide available.'),
-                'pruning_guide': plant.get('pruning', 'No guide available.')  # Include pruning guide details
-            } for plant in plants_data]
-
-            return jsonify(plants)
+            # Prepare the guides data for response
+            if guides_data:
+                plants = []
+                for guide in guides_data:
+                    plant_info = {
+                        'common_name': guide.get('common_name', 'Unknown'),
+                        'scientific_name': guide.get('scientific_name', 'Unknown'),
+                        'care_guides': []
+                    }
+                    for section in guide.get('section', [])[:3]:  # Limit to first 3 care guides
+                        care_guide = {
+                            'type': section.get('type', 'No type available'),
+                            'description': section.get('description', 'No description available')
+                        }
+                        plant_info['care_guides'].append(care_guide)
+                    plants.append(plant_info)
+                return jsonify(plants)
+            else:
+                return jsonify({'message': 'No care guides found for the specified plant.'})
         except requests.RequestException as e:
-            print(e)
+            # Log the error and return a message
+            print(f"Error fetching data: {str(e)}")
             return jsonify({'error': 'Failed to fetch data from Perennial API'}), 500
 
+
+
+    @app.route('/api/bookmark', methods=['GET', 'POST'])
+    @login_required
+    def api_bookmark():
+        data = request.json  # Parse JSON data from the request
+        plant_name = data.get('plant_name')
+        scientific_name = data.get('scientific_name')
+        guide_type = data.get('guide_type')
+        guide_description = data.get('guide_description')
+
+        # Create a new bookmark object and add it to the database
+        bookmark = Bookmark(
+            plant_name=plant_name,
+            scientific_name=scientific_name,
+            guide_type=guide_type,
+            guide_description=guide_description,
+            user_id=current_user.id  # Assuming you have a user_id associated with the bookmarks
+        )
+        db.session.add(bookmark)
+        db.session.commit()
+
+        # Optionally, you can return a response to the client
+        return jsonify({'message': 'Plant bookmarked successfully'})
+        
+
+    @app.route('/api/remove_bookmark', methods=['POST'])
+    @login_required
+    def api_remove_bookmark():
+        data = request.json
+        bookmark_id = data.get('bookmark_id')
+        if not bookmark_id:
+            return jsonify({'error': 'Bookmark ID is required'}), 400
+
+        bookmark = Bookmark.query.filter_by(id=bookmark_id, user_id=current_user.id).first()
+        if not bookmark:
+            return jsonify({'error': 'Bookmark not found or does not belong to the current user'}), 404
+
+        db.session.delete(bookmark)
+        db.session.commit()
+        return jsonify({'message': 'Bookmark removed successfully'})
 
 
     return app

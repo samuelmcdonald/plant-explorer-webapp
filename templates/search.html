@@ -5,9 +5,34 @@
     .plant-box {
         border: 1px solid #ddd;
         padding: 10px;
-        margin-bottom: 10px;
+        margin-bottom: 20px; /* Increased bottom margin for spacing between plant boxes */
         border-radius: 5px;
         background-color: #f9f9f9;
+        position: relative; /* Add relative positioning to the plant box */
+    }
+
+    .guide {
+        margin-bottom: 10px; /* Adds space below each guide */
+    }
+
+    .scientific-name {
+        margin-bottom: 15px; /* Adjust the space as needed */
+    }
+
+    .bookmark-btn {
+        position: absolute; /* Position the bookmark button */
+        top: 5px; /* Adjust top position */
+        right: 5px; /* Adjust right position */
+        font-size: 14px; /* Adjust font size */
+        padding: 5px; /* Adjust padding */
+        background-color: transparent; /* Transparent background */
+        border: none; /* No border */
+        cursor: pointer;
+        outline: none; /* Remove outline on focus */
+}
+
+    .bookmark-btn:hover {
+        background-color: transparent; /* Transparent background on hover */
     }
 </style>
 
@@ -27,29 +52,27 @@
     $(document).ready(function() {
         $('#search-button').on('click', function() {
             var query = $('#search-input').val();
-    
+
             if (query) {
                 $.ajax({
                     url: '/api/search',
                     data: { q: query },
                     success: function(data) {
                         $('#search-results').empty();
-    
+
                         if (data.error) {
                             $('#search-results').append('<p>Could not fetch the results. Please try again later.</p>');
                         } else if (data.length > 0) {
                             data.forEach(function(plant) {
-                                var wateringGuide = plant.watering_guide;
-                                var sunlightGuide = plant.sunlight_guide;
-                                var pruningGuide = plant.pruning_guide;
-    
                                 var plantHTML = `<div class="plant-box">
                                     <strong>Common Name:</strong> ${plant.common_name}<br>
-                                    <strong>Scientific Name:</strong> ${plant.scientific_name}<br>
-                                    <strong>Watering Guide:</strong> ${wateringGuide}<br>
-                                    <strong>Sunlight Guide:</strong> ${sunlightGuide}<br>
-                                    <strong>Pruning Guide:</strong> ${pruningGuide}<br>
-                                </div>`;
+                                    <div class="scientific-name"><strong>Scientific Name:</strong> ${plant.scientific_name}</div>`; // Updated line
+
+                                plant.care_guides.forEach(function(guide) {
+                                    plantHTML += `<div class="guide"><strong>${guide.type} Guide:</strong> ${guide.description}</div>`;
+                                });
+
+                                plantHTML += `<button class="bookmark-btn" data-plant-name="${plant.common_name}" data-scientific-name="${plant.scientific_name}">&#128279;</button></div>`; // Append bookmark button to each plant box
                                 $('#search-results').append(plantHTML);
                             });
                         } else {
@@ -64,7 +87,34 @@
                 $('#search-results').empty().append('<p>Please enter a search term.</p>');
             }
         });
-    });    
+    });
+
+    $('#search-results').on('click', '.bookmark-btn', function() {
+        var plantName = $(this).data('plant-name');
+        var scientificName = $(this).data('scientific-name');
+        var guideType = $(this).siblings('.guide').find('strong').text();
+        var guideDescription = $(this).siblings('.guide').text().trim();
+
+        $.ajax({
+            url: '/api/bookmark',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                plant_name: plantName,
+                scientific_name: scientificName,
+                guide_type: guideType,
+                guide_description: guideDescription
+            }),
+            success: function(response) {
+                console.log(response.message);
+                alert('Plant saved successfully to favorites!');
+                // Optionally, you can display a success message to the user
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', error);
+                // Optionally, you can display an error message to the user
+            }
+        });
+    });
 </script>
 {% endblock %}
-
