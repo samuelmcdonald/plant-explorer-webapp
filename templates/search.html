@@ -1,108 +1,70 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="search-container">
-    <h1>Search for Plants</h1>
-    <input type="text" id="search-input" placeholder="Type to search for plants..." autocomplete="off">
-    <div id="search-results"></div>
+<style>
+    .plant-box {
+        border: 1px solid #ddd;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+    }
+</style>
+
+<div class="container mt-5">
+    <h2 class="mb-4">Search for Plants</h2>
+    <div class="input-group mb-3">
+        <input type="text" id="search-input" class="form-control" placeholder="Type to search for plants..." autocomplete="off">
+        <div class="input-group-append">
+            <button class="btn btn-outline-secondary" type="button" id="search-button">Search</button>
+        </div>
+    </div>
+    <div id="search-results" class="mt-3"></div>
 </div>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script>
     $(document).ready(function() {
-        $('#search-input').on('input', function() {
-            var searchValue = $(this).val();
-            if (searchValue.length >= 3) {
+        $('#search-button').on('click', function() {
+            var query = $('#search-input').val();
+    
+            if (query) {
                 $.ajax({
-                    url: "{{ url_for('api_search_plants') }}",
-                    method: "POST",
-                    contentType: "application/json",
-                    data: JSON.stringify({ plant_name: searchValue }),
+                    url: '/api/search',
+                    data: { q: query },
                     success: function(data) {
                         $('#search-results').empty();
-                        data.forEach(function(plant) {
-                            var bookmarkClass = plant.bookmarked ? 'bookmarked' : '';
-                            var resultHTML = `<div class="plant-card">
-                                <img src="${plant.image_url || 'path/to/default/image'}" alt="Plant Image" class="plant-image">
-                                <div class="plant-info">
-                                    <h3>${plant.common_name || plant.scientific_name}</h3>
-                                    <p>Duration: ${plant.duration || 'N/A'}<br>
-                                       Edible Parts: ${plant.edible_parts || 'N/A'}<br>
-                                       Edible: ${plant.edible ? 'Yes' : 'No'}<br>
-                                       Vegetable: ${plant.vegetable ? 'Yes' : 'No'}<br>
-                                       Synonyms: ${plant.synonyms || 'None'}</p>
-                                </div>
-                                <i class="far fa-bookmark bookmark-btn ${bookmarkClass}"
-                                   data-plant-name="${plant.scientific_name || plant.common_name}"
-                                   data-plant-image-url="${plant.image_url}"
-                                   data-common-name="${plant.common_name}"
-                                   data-scientific-name="${plant.scientific_name}"
-                                   data-description="Details here..."
-                                   data-duration="${plant.duration}"
-                                   data-edible="${plant.edible}"
-                                   data-vegetable="${plant.vegetable}"
-                                   data-edible-parts="${plant.edible_parts}"
-                                   data-synonyms="${plant.synonyms}"
-                                   onclick="toggleBookmark(this)"></i>
+    
+                        if (data.error) {
+                            $('#search-results').append('<p>Could not fetch the results. Please try again later.</p>');
+                        } else if (data.length > 0) {
+                            data.forEach(function(plant) {
+                                var wateringGuide = plant.watering_guide;
+                                var sunlightGuide = plant.sunlight_guide;
+                                var pruningGuide = plant.pruning_guide;
+    
+                                var plantHTML = `<div class="plant-box">
+                                    <strong>Common Name:</strong> ${plant.common_name}<br>
+                                    <strong>Scientific Name:</strong> ${plant.scientific_name}<br>
+                                    <strong>Watering Guide:</strong> ${wateringGuide}<br>
+                                    <strong>Sunlight Guide:</strong> ${sunlightGuide}<br>
+                                    <strong>Pruning Guide:</strong> ${pruningGuide}<br>
                                 </div>`;
-                            $('#search-results').append(resultHTML);
-                        });
+                                $('#search-results').append(plantHTML);
+                            });
+                        } else {
+                            $('#search-results').append('<p>No plants found. Try a different search.</p>');
+                        }
+                    },
+                    error: function() {
+                        $('#search-results').append('<p>Failed to fetch results.</p>');
                     }
                 });
             } else {
-                $('#search-results').empty();
+                $('#search-results').empty().append('<p>Please enter a search term.</p>');
             }
         });
-    
-        window.toggleBookmark = function(button) {
-        var plantName = $(button).data('plant-name');
-        var bookmarked = $(button).hasClass('bookmarked');
-        var plantDetails = {
-            plant_name: plantName,
-            bookmarked: !bookmarked,
-            // Ensure that you are sending boolean values for 'edible' and 'vegetable' if they exist.
-            // Assuming 'data-edible' and 'data-vegetable' attributes store 'Yes' or 'No'.
-            edible: $(button).data('edible') === 'Yes', // Convert to boolean
-            vegetable: $(button).data('vegetable') === 'Yes', // Convert to boolean
-            // Include other details similar to below:
-            plant_common_name: $(button).data('common-name'),
-            plant_scientific_name: $(button).data('scientific-name'),
-            plant_image_url: $(button).data('plant-image-url'),
-            plant_description: $(button).data('description'),
-            duration: $(button).data('duration'),
-            edible_parts: $(button).data('edible-parts'),
-            synonyms: $(button).data('synonyms')
-        };
-
-        $.ajax({
-            url: '/update_favorites',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify(plantDetails),
-            success: function(response) {
-                if (response.bookmarked) {
-                    $(button).addClass('bookmarked').css('background-color', '#007bff').data('bookmarked', true);
-                    showTempMessage(plantName + " has been added to your favorites");
-                } else {
-                    $(button).removeClass('bookmarked').css('background-color', '').data('bookmarked', false);
-                    showTempMessage(plantName + " has been removed from your favorites");
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error("Error updating favorites:", xhr.responseText);
-            }
-        });
-    };
-
-    function showTempMessage(message) {
-        var tempMessage = $('<div>').addClass('temp-message').text(message);
-        $('body').append(tempMessage);
-        setTimeout(function() {
-            tempMessage.fadeOut(function() {
-                tempMessage.remove();
-            });
-        }, 3000); // Message displays for 3 seconds then fades out
-    }
-});
+    });    
 </script>
 {% endblock %}
+

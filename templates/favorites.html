@@ -4,14 +4,9 @@
 <div id="favorites-container">
     {% for favorite in favorites %}
     <div class="plant-card">
-        <img src="{{ favorite.plant_image_url if favorite.plant_image_url else url_for('static', filename='images/default-plant-image.png') }}" alt="Plant Image" class="plant-image">
+        
         <div class="plant-info">
-            <h3>{{ favorite.plant_common_name or favorite.plant_scientific_name or 'Unknown Plant' }}</h3>
-            <p>Duration: {{ favorite.duration or 'N/A' }}<br>
-               Edible Parts: {{ favorite.edible_parts or 'N/A' }}<br>
-               Edible: {{ favorite.edible or 'No' }}<br>
-               Vegetable: {{ favorite.vegetable or 'No' }}<br>
-               Synonyms: {{ favorite.synonyms or 'None' }}</p>
+
         </div>
         <i class="fas fa-times bookmark-btn" data-plant-name="{{ favorite.plant_name }}" onclick="unbookmarkPlant(this)"></i>
     </div>

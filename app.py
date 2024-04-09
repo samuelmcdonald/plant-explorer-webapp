@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from flask import Flask, render_template, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -12,10 +13,9 @@ from extensions import db, migrate, login_manager
 import os
 import requests
 from flask import Flask, request, render_template, jsonify
-from models import Favorite
 
 
-api_key = 'JyXG87zvWmnQIa28tx4O3OBJ87mxXlrGr8kDnP9_JEo'
+api_key = 'sk-stgs65f4ded3c05e34749'
 
 def create_app():
     app = Flask(__name__)
@@ -79,89 +79,98 @@ def create_app():
 
     @app.route('/favorites')
     @login_required
-    def favorites():
-        user_favorites = Favorite.query.filter_by(user_id=current_user.id).all()
-        
-        # Debugging: Log out some details of each favorite to verify their existence
-        for favorite in user_favorites:
-            print(f"Plant Name: {favorite.plant_name}, Image URL: {favorite.plant_image_url}")
-        
-        return render_template('favorites.html', favorites=user_favorites)
+    def favorites():       
+        return render_template('favorites.html')
             
     @app.route('/search')
     def search():
         return render_template('search.html')
 
 
-    @app.route('/api/search_plants', methods=['POST'])
-    def api_search_plants():
-        data = request.json  # Get JSON data from the request
-        plant_name = data.get('plant_name')  # Access the plant_name field
-        plant_data = fetch_plant_data(plant_name)
-        if plant_data and 'data' in plant_data:
-            # Transforming the response to include only necessary info
-            simplified_data = [
-                {
-                    'common_name': plant.get('common_name'), 
-                    'scientific_name': plant.get('scientific_name'), 
-                    'image_url': plant.get('image_url')
-                } for plant in plant_data['data']
-            ]
-            return jsonify(simplified_data)  # Return the simplified plant data
-        return jsonify([])  # Return an empty list if no data is found
-
-    def fetch_plant_data(plant_name):
-        """Fetches data for a given plant name from the Trefle API."""
-        api_url = f"https://trefle.io/api/v1/plants/search?token={api_key}&q={plant_name}"
-        response = requests.get(api_url)
+    def fetch_species_id(api_key, plant_name):
+        search_url = f"https://perenual.com/api/species-list?key={api_key}&q={plant_name}"
+        response = requests.get(search_url)
+        print("API Response:", response.text)  # Print API response
         if response.status_code == 200:
-            return response.json()
-        else:
-            return None
-        
-    @app.route('/update_favorites', methods=['POST'])
-    @login_required
-    def update_favorites():
-        data = request.json
-        plant_name = data.get('plant_name')
-        bookmarked = data.get('bookmarked')
-        plant_common_name = data.get('plant_common_name', '')
-        plant_scientific_name = data.get('plant_scientific_name', '')
-        plant_image_url = data.get('plant_image_url', '')
-        plant_description = data.get('plant_description', '')
-        # Assuming these additional fields are optional, provide default values
-        duration = data.get('duration', 'N/A')
-        edible = data.get('edible', False)
-        vegetable = data.get('vegetable', False)
-        edible_parts = data.get('edible_parts', 'N/A')
-        synonyms = data.get('synonyms', 'None')
+            species_data = response.json().get('data', [])
+            if species_data:
+                # Assuming the API returns the first species found
+                return species_data[0].get('species_id')
+        return None
 
-        favorite = Favorite.query.filter_by(user_id=current_user.id, plant_name=plant_name).first()
 
-        if bookmarked and not favorite:
-            new_favorite = Favorite(
-                user_id=current_user.id,
-                plant_name=plant_name,
-                plant_common_name=plant_common_name,
-                plant_scientific_name=plant_scientific_name,
-                plant_image_url=plant_image_url,
-                plant_description=plant_description,
-                duration=duration,
-                edible=edible,
-                vegetable=vegetable,
-                edible_parts=edible_parts,
-                synonyms=synonyms
-            )
-            db.session.add(new_favorite)
-            db.session.commit()
-            return jsonify({'bookmarked': True})
-        elif not bookmarked and favorite:
-            db.session.delete(favorite)
-            db.session.commit()
-            return jsonify({'bookmarked': False})
 
-        return jsonify({'error': 'Unknown error occurred'}), 500
+    def fetch_care_guide(api_key, plant_id):
+        guide_types = ['watering', 'sunlight', 'pruning']
+        guide_details = {}
 
+        for guide_type in guide_types:
+            guide_url = f"https://perenual.com/api/species-care-guide-list?key={api_key}&type={guide_type}&species_id={plant_id}"
+            try:
+                response = requests.get(guide_url)
+                response.raise_for_status()  # Raise an exception for 4xx or 5xx status codes
+                
+                print(f"{guide_type.capitalize()} Guide Response:", response.text)  # Print API response
+                
+                if response.status_code == 200:
+                    guide_data = response.json().get('data', [])
+                    if guide_data:
+                        guide_details[guide_type] = guide_data[0].get('description')
+                    else:
+                        guide_details[guide_type] = 'No guide available.'
+                else:
+                    guide_details[guide_type] = 'Failed to fetch guide.'
+                    
+                print(f"{guide_type.capitalize()} Guide Details:", guide_details[guide_type])  # Print guide details
+            except requests.RequestException as e:
+                print(f"Error fetching {guide_type} guide:", e)
+                guide_details[guide_type] = f"Error fetching {guide_type} guide: {str(e)}"
+                
+        return guide_details
+
+
+
+    @app.route('/api/search', methods=['GET'])
+    def api_search():
+        query_params = {
+            'q': request.args.get('q', ''),
+            'page': request.args.get('page', 1),
+            'order': request.args.get('order', 'asc'),
+        }
+
+        api_url = f"https://perenual.com/api/species-list?key={api_key}"
+        for param, value in query_params.items():
+            if value is not None:
+                api_url += f"&{param}={value}"
+
+        try:
+            response = requests.get(api_url)
+            response.raise_for_status()
+            plants_data = response.json().get('data', [])
+
+            with ThreadPoolExecutor() as executor:
+                futures = {executor.submit(fetch_care_guide, api_key, plant.get('species_id', '')): plant for plant in plants_data}
+                for future in futures:
+                    plant = futures[future]
+                    guide_details = future.result()  # Fetch all guides
+                    
+                    # Update plant dictionary with fetched guides
+                    plant.update(guide_details)
+
+            # Construct the final plants list with required information
+            plants = [{
+                'common_name': plant['common_name'], 
+                'scientific_name': plant['scientific_name'][0],
+                'cycle': plant.get('cycle', 'Unknown'),  # Assuming you still want to include the cycle
+                'watering_guide': plant.get('watering', 'No guide available.'),
+                'sunlight_guide': plant.get('sunlight', 'No guide available.'),
+                'pruning_guide': plant.get('pruning', 'No guide available.')  # Include pruning guide details
+            } for plant in plants_data]
+
+            return jsonify(plants)
+        except requests.RequestException as e:
+            print(e)
+            return jsonify({'error': 'Failed to fetch data from Perennial API'}), 500
 
 
 
