@@ -1,34 +1,89 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div id="favorites-container">
+<style>
+    .plant-box {
+        position: relative;
+        border: 1px solid #ddd;
+        padding: 10px;
+        margin-bottom: 20px;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+        color: black;
+    }
+
+    .guide {
+        margin-bottom: 10px;
+    }
+
+    .scientific-name {
+        margin-bottom: 15px;
+    }
+
+    .delete-btn {
+        padding: 5px 10px;
+        font-size: 14px;
+        background-color: #ff6666;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    .delete-btn:hover {
+        background-color: #ff4d4d;
+    }
+</style>
+
+<div id="favorites-container" class="container mt-5">
     {% for favorite in favorites %}
-    <div class="plant-card">
-        <img src="{{ favorite.plant_image_url if favorite.plant_image_url else url_for('static', filename='images/default-plant-image.png') }}" alt="Plant Image" class="plant-image">
+    <div class="plant-box">
         <div class="plant-info">
-            <h3>{{ favorite.plant_common_name or favorite.plant_scientific_name or 'Unknown Plant' }}</h3>
-            <p>Duration: {{ favorite.duration or 'N/A' }}<br>
-               Edible Parts: {{ favorite.edible_parts or 'N/A' }}<br>
-               Edible: {{ favorite.edible or 'No' }}<br>
-               Vegetable: {{ favorite.vegetable or 'No' }}<br>
-               Synonyms: {{ favorite.synonyms or 'None' }}</p>
+            <p><strong>Common Name:</strong> {{ favorite.plant_name }}</p>
+            <p><strong>Scientific Name:</strong> {{ favorite.scientific_name }}</p>
+            <p><strong>Guide Type:</strong> {{ favorite.guide_type }}</p>
+            <p><strong>Guide Description:</strong> {{ favorite.guide_description }}</p>
+            <button class="delete-btn" data-bookmark-id="{{ favorite.id }}">Delete</button> <!-- Updated button for removing bookmarks -->
         </div>
-        <i class="fas fa-times bookmark-btn" data-plant-name="{{ favorite.plant_name }}" onclick="unbookmarkPlant(this)"></i>
     </div>
     {% else %}
     <p>You have no favorite plants yet.</p>
     {% endfor %}
 </div>
+
 {% endblock %}
 
 {% block scripts %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script>
-$(document).ready(function() {
-    $('#favorites-container').on('click', '.bookmark-btn', function() {
-        var button = this;
-        var plantName = $(this).data('plant-name');
-        window.unbookmarkPlant(button);
+    $(document).ready(function() {
+    $('#favorites-container').on('click', '.delete-btn', function() {
+        var bookmarkId = $(this).data('bookmark-id');
+        if (!bookmarkId) {
+            alert('Bookmark ID is missing.');
+            return;
+        }
+
+        // Directly use the AJAX call here instead of calling deleteBookmark
+        $.ajax({
+            url: '/api/remove_bookmark',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ bookmark_id: bookmarkId }),
+            success: function(response) {
+                alert(response.message); // Notify the user of success
+                // Remove the plant box from the UI
+                $(this).closest('.plant-box').remove();
+            }.bind(this), // Use .bind(this) to ensure $(this) inside the success function refers to the delete button
+            error: function(xhr) {
+                // Notify the user of failure
+                alert('Error deleting bookmark: ' + xhr.responseText);
+            }
+        });
     });
 });
+
 </script>
+
 {% endblock %}

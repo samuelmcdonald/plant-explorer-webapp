@@ -5,10 +5,14 @@
     box-sizing: border-box;
 }
 
-body, html {
-    height: 100%;
-    background-color: #f5f5f5; /* Light grey background */
+.login-page-background {
+    background-image: url('images/background1.jpg');
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: fixed; /* Optional: Keeps the background fixed during scroll */
 }
+
 
 /* Centered form styles */
 .centered-form {
@@ -17,6 +21,7 @@ body, html {
     align-items: center;
     min-height: 100vh;
 }
+
 
 .form-container {
     background-color: white;
@@ -41,12 +46,13 @@ button, .btn, .back-to-login, .back-to-register {
     padding: 14px 20px;
     margin: 8px 0; /* Space between buttons */
     border: none;
-    border-radius: 4px;
+    border-radius: 20px;
     cursor: pointer;
     text-decoration: none; /* Remove underline for links */
     text-align: center; /* Center text for links */
     display: block; /* Force links to be block elements */
-    width: calc(100% - 40px); /* Ensure buttons are the same width */
+    /* width: calc(100% - 40px); Ensure buttons are the same width */
+    width: 230px;
 }
 
 button:hover, .btn:hover, .back-to-login:hover, .back-to-register:hover {
@@ -96,36 +102,6 @@ main, .content-container {
     padding-top: 70px; /* Adjust based on the taskbar's actual height */
 }
 
-.plant-card {
-    position: relative; /* Add this line */
-    display: flex;
-    background-color: white;
-    margin: 10px 0;
-    padding: 10px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    align-items: center;
-}
-
-
-.plant-image {
-    width: 100px;
-    height: 100px;
-    object-fit: cover;
-    margin-right: 15px;
-    border-radius: 8px;
-}
-
-.plant-info h2, .plant-info p {
-    margin: 0;
-    padding: 0;
-}
-
-.plant-info h2 {
-    margin-bottom: 5px;
-    font-size: 18px;
-}
-
 .plant-info p {
     font-size: 14px;
     color: #666;
@@ -133,10 +109,12 @@ main, .content-container {
 
 .bookmark-btn {
     cursor: pointer;
-    color: black; /* Default icon color */
+    color: black;
     position: absolute;
     top: 10px;
     right: 10px;
+    font-size: 24px;
+    transition: color 0.3s; /* Add smooth color transition */
 }
 
 .bookmark-btn.bookmarked {
@@ -156,3 +134,12 @@ main, .content-container {
     padding: 10px;
     z-index: 1000;
 }
+
+.form-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; /* This will vertically center if the parent's height is set */
+    min-height: 50vh; /* Full height of the viewport */
+}
+

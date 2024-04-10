@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from flask import Flask, render_template, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -12,10 +13,12 @@ from extensions import db, migrate, login_manager
 import os
 import requests
 from flask import Flask, request, render_template, jsonify
-from models import Favorite
+from flask import request, jsonify
+from models import Bookmark
+from extensions import db
 
 
-api_key = 'JyXG87zvWmnQIa28tx4O3OBJ87mxXlrGr8kDnP9_JEo'
+api_key = 'sk-stgs65f4ded3c05e34749'
 
 def create_app():
     app = Flask(__name__)
@@ -37,7 +40,10 @@ def create_app():
 
     # Define all your routes within create_app to ensure they are part of the application context
     @app.route('/')
+    @login_required
     def home():
+        if not current_user.is_authenticated:
+            return redirect(url_for('login'))
         return render_template('index.html', hide_nav=False)
 
     @app.route('/register', methods=['GET', 'POST'])
@@ -79,90 +85,95 @@ def create_app():
 
     @app.route('/favorites')
     @login_required
-    def favorites():
-        user_favorites = Favorite.query.filter_by(user_id=current_user.id).all()
-        
-        # Debugging: Log out some details of each favorite to verify their existence
-        for favorite in user_favorites:
-            print(f"Plant Name: {favorite.plant_name}, Image URL: {favorite.plant_image_url}")
-        
-        return render_template('favorites.html', favorites=user_favorites)
+    def favorites():       
+        favorites = Bookmark.query.filter_by(user_id=current_user.id).all()
+        return render_template('favorites.html', favorites=favorites)
             
     @app.route('/search')
+    @login_required
     def search():
         return render_template('search.html')
 
 
-    @app.route('/api/search_plants', methods=['POST'])
-    def api_search_plants():
-        data = request.json  # Get JSON data from the request
-        plant_name = data.get('plant_name')  # Access the plant_name field
-        plant_data = fetch_plant_data(plant_name)
-        if plant_data and 'data' in plant_data:
-            # Transforming the response to include only necessary info
-            simplified_data = [
-                {
-                    'common_name': plant.get('common_name'), 
-                    'scientific_name': plant.get('scientific_name'), 
-                    'image_url': plant.get('image_url')
-                } for plant in plant_data['data']
-            ]
-            return jsonify(simplified_data)  # Return the simplified plant data
-        return jsonify([])  # Return an empty list if no data is found
-
-    def fetch_plant_data(plant_name):
-        """Fetches data for a given plant name from the Trefle API."""
-        api_url = f"https://trefle.io/api/v1/plants/search?token={api_key}&q={plant_name}"
-        response = requests.get(api_url)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            return None
-        
-    @app.route('/update_favorites', methods=['POST'])
+    @app.route('/api/search', methods=['GET'])
     @login_required
-    def update_favorites():
-        data = request.json
+    def api_search():
+        plant_name = request.args.get('q', '')
+        if not plant_name:
+            return jsonify({'error': 'Please provide a plant name to search for.'}), 400
+
+        api_url = f"https://perenual.com/api/species-care-guide-list?key={api_key}&q={plant_name}"
+
+        try:
+            response = requests.get(api_url)
+            response.raise_for_status()  # Checks for HTTP request errors
+            guides_data = response.json().get('data', [])
+
+            # Prepare the guides data for response
+            if guides_data:
+                plants = []
+                for guide in guides_data:
+                    plant_info = {
+                        'common_name': guide.get('common_name', 'Unknown'),
+                        'scientific_name': guide.get('scientific_name', 'Unknown'),
+                        'care_guides': []
+                    }
+                    for section in guide.get('section', [])[:3]:  # Limit to first 3 care guides
+                        care_guide = {
+                            'type': section.get('type', 'No type available'),
+                            'description': section.get('description', 'No description available')
+                        }
+                        plant_info['care_guides'].append(care_guide)
+                    plants.append(plant_info)
+                return jsonify(plants)
+            else:
+                return jsonify({'message': 'No care guides found for the specified plant.'})
+        except requests.RequestException as e:
+            # Log the error and return a message
+            print(f"Error fetching data: {str(e)}")
+            return jsonify({'error': 'Failed to fetch data from Perennial API'}), 500
+
+
+
+    @app.route('/api/bookmark', methods=['GET', 'POST'])
+    @login_required
+    def api_bookmark():
+        data = request.json  # Parse JSON data from the request
         plant_name = data.get('plant_name')
-        bookmarked = data.get('bookmarked')
-        plant_common_name = data.get('plant_common_name', '')
-        plant_scientific_name = data.get('plant_scientific_name', '')
-        plant_image_url = data.get('plant_image_url', '')
-        plant_description = data.get('plant_description', '')
-        # Assuming these additional fields are optional, provide default values
-        duration = data.get('duration', 'N/A')
-        edible = data.get('edible', False)
-        vegetable = data.get('vegetable', False)
-        edible_parts = data.get('edible_parts', 'N/A')
-        synonyms = data.get('synonyms', 'None')
+        scientific_name = data.get('scientific_name')
+        guide_type = data.get('guide_type')
+        guide_description = data.get('guide_description')
 
-        favorite = Favorite.query.filter_by(user_id=current_user.id, plant_name=plant_name).first()
+        # Create a new bookmark object and add it to the database
+        bookmark = Bookmark(
+            plant_name=plant_name,
+            scientific_name=scientific_name,
+            guide_type=guide_type,
+            guide_description=guide_description,
+            user_id=current_user.id  # Assuming you have a user_id associated with the bookmarks
+        )
+        db.session.add(bookmark)
+        db.session.commit()
 
-        if bookmarked and not favorite:
-            new_favorite = Favorite(
-                user_id=current_user.id,
-                plant_name=plant_name,
-                plant_common_name=plant_common_name,
-                plant_scientific_name=plant_scientific_name,
-                plant_image_url=plant_image_url,
-                plant_description=plant_description,
-                duration=duration,
-                edible=edible,
-                vegetable=vegetable,
-                edible_parts=edible_parts,
-                synonyms=synonyms
-            )
-            db.session.add(new_favorite)
-            db.session.commit()
-            return jsonify({'bookmarked': True})
-        elif not bookmarked and favorite:
-            db.session.delete(favorite)
-            db.session.commit()
-            return jsonify({'bookmarked': False})
+        # Optionally, you can return a response to the client
+        return jsonify({'message': 'Plant bookmarked successfully'})
+        
 
-        return jsonify({'error': 'Unknown error occurred'}), 500
+    @app.route('/api/remove_bookmark', methods=['POST'])
+    @login_required
+    def api_remove_bookmark():
+        data = request.json
+        bookmark_id = data.get('bookmark_id')
+        if not bookmark_id:
+            return jsonify({'error': 'Bookmark ID is required'}), 400
 
+        bookmark = Bookmark.query.filter_by(id=bookmark_id, user_id=current_user.id).first()
+        if not bookmark:
+            return jsonify({'error': 'Bookmark not found or does not belong to the current user'}), 404
 
+        db.session.delete(bookmark)
+        db.session.commit()
+        return jsonify({'message': 'Bookmark removed successfully'})
 
 
     return app

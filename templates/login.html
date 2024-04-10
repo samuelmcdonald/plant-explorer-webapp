@@ -4,7 +4,7 @@
     <title>Login</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
 </head>
-<body class="centered-form">
+<body class="centered-form login-page-background">
     <div class="form-container">
         <form action="{{ url_for('login') }}" method="post">
             {{ form.hidden_tag() }}
