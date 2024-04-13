@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Login</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
-</head>
-<body class="centered-form">
-    <div class="form-container">
+    <head>
+        <title>Login</title>
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    </head>
+    <body class="centered-form background">
+        <div class="form-container">
+            <img src="{{ url_for('static', filename='images/logo1.jpg') }}" alt="Company Logo" class="logo">
         <form action="{{ url_for('login') }}" method="post">
             {{ form.hidden_tag() }}
             <div>

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+ 
 {% block content %}
 <style>
     .plant-box {
@@ -11,15 +11,15 @@
         background-color: #f9f9f9;
         color: black;
     }
-
+ 
     .guide {
         margin-bottom: 10px;
     }
-
+ 
     .scientific-name {
         margin-bottom: 15px;
     }
-
+ 
     .delete-btn {
         padding: 5px 10px;
         font-size: 14px;
@@ -30,12 +30,12 @@
         cursor: pointer;
         transition: background-color 0.3s;
     }
-
+ 
     .delete-btn:hover {
         background-color: #ff4d4d;
     }
 </style>
-
+ 
 <div id="favorites-container" class="container mt-5">
     {% for favorite in favorites %}
     <div class="plant-box">
@@ -44,46 +44,47 @@
             <p><strong>Scientific Name:</strong> {{ favorite.scientific_name }}</p>
             <p><strong>Guide Type:</strong> {{ favorite.guide_type }}</p>
             <p><strong>Guide Description:</strong> {{ favorite.guide_description }}</p>
-            <button class="delete-btn" data-bookmark-id="{{ favorite.id }}">Delete</button> <!-- Updated button for removing bookmarks -->
+            <form action="/api/remove_bookmark" method="post" class="delete-form">
+                <input type="hidden" name="bookmark_id" value="{{ favorite.id }}">
+                <button type="submit" class="delete-btn">Delete</button> <!-- Updated button for removing bookmarks -->
+            </form>
         </div>
     </div>
     {% else %}
     <p>You have no favorite plants yet.</p>
     {% endfor %}
 </div>
-
+ 
 {% endblock %}
-
+ 
 {% block scripts %}
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script>
     $(document).ready(function() {
-    $('#favorites-container').on('click', '.delete-btn', function() {
-        var bookmarkId = $(this).data('bookmark-id');
-        if (!bookmarkId) {
-            alert('Bookmark ID is missing.');
-            return;
-        }
-
-        // Directly use the AJAX call here instead of calling deleteBookmark
-        $.ajax({
-            url: '/api/remove_bookmark',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ bookmark_id: bookmarkId }),
-            success: function(response) {
-                alert(response.message); // Notify the user of success
-                // Remove the plant box from the UI
-                $(this).closest('.plant-box').remove();
-            }.bind(this), // Use .bind(this) to ensure $(this) inside the success function refers to the delete button
-            error: function(xhr) {
-                // Notify the user of failure
-                alert('Error deleting bookmark: ' + xhr.responseText);
-            }
+        $('.delete-form').submit(function(event) {
+            event.preventDefault(); // Prevent default form submission behavior
+           
+            // Get the form data
+            var formData = $(this).serialize();
+           
+            // Reference to the current form
+            var currentForm = $(this);
+           
+            // Submit the form via AJAX
+            $.ajax({
+                url: '/api/remove_bookmark',
+                type: 'POST',
+                data: formData,
+                success: function(response) {
+                    alert(response.message); // Notify the user of success
+                    // Remove the plant box from the UI
+                    currentForm.closest('.plant-box').remove();
+                },
+                error: function(xhr) {
+                    // Notify the user of failure
+                    alert('Error deleting bookmark: ' + xhr.responseText);
+                }
+            });
         });
     });
-});
-
 </script>
-
 {% endblock %}

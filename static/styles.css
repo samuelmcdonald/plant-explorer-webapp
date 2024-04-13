@@ -5,9 +5,28 @@
     box-sizing: border-box;
 }
 
+.background {
+    background-image: url('/static/images/background1.jpg'); 
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;  
+}
+
+.logo {
+    display: block;
+    margin: 20px auto; /* Horizontal auto margins center the block-level image */
+    max-height: 150px; /* Constrain the maximum height */
+    max-width: 100%; /* Constrain the maximum width, just in case */
+    height: auto; /* Maintain aspect ratio */
+    width: auto; /* Maintain aspect ratio */
+}
+
+
 body, html {
     height: 100%;
-    background-color: #f5f5f5; /* Light grey background */
+    background-color: #ccffcc;
+    font-family: 'Arial', sans-serif;
 }
 
 /* Centered form styles */
@@ -21,6 +40,11 @@ body, html {
 
 .form-container {
     background-color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; /* This will vertically center if the parent's height is set */
+    min-height: 50vh; /* Full height of the viewport */
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -42,12 +66,12 @@ button, .btn, .back-to-login, .back-to-register {
     padding: 14px 20px;
     margin: 8px 0; /* Space between buttons */
     border: none;
-    border-radius: 4px;
+    border-radius: 20px;
     cursor: pointer;
     text-decoration: none; /* Remove underline for links */
     text-align: center; /* Center text for links */
     display: block; /* Force links to be block elements */
-    width: calc(100% - 40px); /* Ensure buttons are the same width */
+    width: 200px; /* Ensure buttons are the same width */
 }
 
 button:hover, .btn:hover, .back-to-login:hover, .back-to-register:hover {

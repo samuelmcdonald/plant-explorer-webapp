@@ -162,18 +162,15 @@ def create_app():
     @app.route('/api/remove_bookmark', methods=['POST'])
     @login_required
     def api_remove_bookmark():
-        data = request.json
-        bookmark_id = data.get('bookmark_id')
-        if not bookmark_id:
-            return jsonify({'error': 'Bookmark ID is required'}), 400
-
+        bookmark_id = request.form.get('bookmark_id')
         bookmark = Bookmark.query.filter_by(id=bookmark_id, user_id=current_user.id).first()
-        if not bookmark:
-            return jsonify({'error': 'Bookmark not found or does not belong to the current user'}), 404
-
-        db.session.delete(bookmark)
-        db.session.commit()
-        return jsonify({'message': 'Bookmark removed successfully'})
+        if bookmark:
+            db.session.delete(bookmark)
+            db.session.commit()
+            flash('Bookmark removed successfully', 'success')
+        else:
+            flash('Bookmark not found or does not belong to the current user', 'error')
+        return redirect(url_for('favorites'))
 
 
     return app

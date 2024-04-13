@@ -4,13 +4,18 @@
     <title>Register</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
 </head>
-<body class="centered-form">
+<body class="centered-form background">
     <div class="form-container">
+        <img src="{{ url_for('static', filename='images/logo1.jpg') }}" alt="Company Logo" class="logo">
         <form action="{{ url_for('register') }}" method="post">
             {{ form.hidden_tag() }}
             <div>
                 {{ form.username.label }}<br>
                 {{ form.username }}
+                {% if form.username.errors %}
+<div class="error">{{ form.username.errors[0] }}</div>
+                {% endif %}
+                
             </div>
             <div>
                 {{ form.password.label }}<br>
