@@ -87,5 +87,5 @@ This will start the Flask development server, and you should see output indicati
 ## Authors
 
 - **Samuel McDonald** - *Created application and leveraged API* - [samuelmcdonald](https://github.com/samuelmcdonald)
-- **Ulysses Bueno** - [GurkeeratBains](https://github.com/BainsGarry) - bainsg21@students.ecu.edu
-- **Gurkeerat Bains** - [TeamMemberUsername](https://github.com/TeamMemberUsername)
+- **Ulysses Bueno** - [TeamMemberUsername](https://github.com/TeamMemberUsername)
+- **Gurkeerat Bains** - [GurkeeratBains](https://github.com/BainsGarry) - bainsg21@students.ecu.edu
