@@ -1,6 +1,29 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h1>Welcome to Plant Explorer!</h1>
-    <p>This is the home page of your plant exploration app.</p>
+    <div class="full-page-form">
+        <div class="welcome-header">
+            <h1>Welcome back, {{ username }}!</h1>
+        </div>
+        <h1>Welcome to Plant Explorer!</h1>
+        <p>Start by searching for any plant. Whether you want to know more before purchasing, or you're curious to learn more about a specific plant, our search tool can find almost any plant by common or scientific name.
+            Add it to your favorites by clicking the "chain" icon to come back to it later!
+        </p>
+        <div class="plant-image">
+            <img src="{{ url_for('static', filename='images/plants.jpg') }}" alt="Plants">
+        </div>
+        <p>Useful links:</p>
+        <div class="links">
+            <a href="https://www.digit1919.com/Portal/Home/BlogPost/e97e9bd1-3a23-42ea-bf0a-deb483affe23">How to have a green thumb</a>
+            <a href="https://www.thespruce.com/the-best-houseplants-for-beginners-4767423">Easy plants for beginners</a>
+            <a href="https://www.birdsandblooms.com/gardening/gardening-basics/top-10-bizarre-plants/">Wacky and fun plants</a>
+        </div>
+        <footer>
+            <div class="footer-content">
+                <span>Samuel Mcdonald: mcdonalds20@students.ecu.edu</span>
+                <span>Gurkeerat Bains: bainsg21@students.ecu.edu</span>
+                <span>Ulysses Bueno: buenou19@students.ecu.edu</span>
+            </div>
+        </footer>
+    </div>
 {% endblock %}

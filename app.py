@@ -44,7 +44,7 @@ def create_app():
     def home():
         if not current_user.is_authenticated:
             return redirect(url_for('login'))
-        return render_template('index.html', hide_nav=False)
+        return render_template('index.html', username=current_user.username, hide_nav=False)
 
     @app.route('/register', methods=['GET', 'POST'])
     def register():
