@@ -8,19 +8,19 @@
         margin-bottom: 20px; /* Increased bottom margin for spacing between plant boxes */
         border-radius: 5px;
         background-color: #f9f9f9;
-        position: relative; /* Add relative positioning to the plant box */
+        position: relative; 
     }
 
     .guide {
-        margin-bottom: 10px; /* Adds space below each guide */
+        margin-bottom: 10px; 
     }
 
     .scientific-name {
-        margin-bottom: 15px; /* Adjust the space as needed */
+        margin-bottom: 15px; 
     }
 
     .bookmark-btn {
-        position: absolute; /* Position the bookmark button */
+        position: absolute; /* Position bookmark button */
         top: 5px; /* Adjust top position */
         right: 5px; /* Adjust right position */
         font-size: 14px; /* Adjust font size */
@@ -108,11 +108,11 @@
             success: function(response) {
                 console.log(response.message);
                 alert('Plant saved successfully to favorites!');
-                // Optionally, you can display a success message to the user
+                // you can display a success message to the user
             },
             error: function(xhr, status, error) {
                 console.error('Error:', error);
-                // Optionally, you can display an error message to the user
+                // you can display an error message to the user
             }
         });
     });
